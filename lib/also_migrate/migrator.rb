@@ -56,12 +56,17 @@ module AlsoMigrate
                   end
                 else
                   if connection.class.to_s.include?('SQLite')
-                    col_string = connection.columns(config[:source]).collect {|c|
+                    col_string = connection.columns(old_table).collect {|c|
                       "#{c.name} #{c.sql_type}"
                     }.join(', ')
                     connection.execute(<<-SQL)
                       CREATE TABLE #{new_table}
                       (#{col_string})
+                    SQL
+                  elsif connection.class.to_s.include?('PostgreSQL')
+                    connection.execute(<<-SQL)
+                      CREATE TABLE #{new_table}
+                      (LIKE #{config[:source]} INCLUDING INDEXES);
                     SQL
                   else
                     connection.execute(<<-SQL)
