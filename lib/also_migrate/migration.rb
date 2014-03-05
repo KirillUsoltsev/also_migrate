@@ -13,12 +13,12 @@ module AlsoMigrate
 
       if !args.empty? && supported.include?(method)
         connection = ActiveRecord::Base.connection
-        table_name = ActiveRecord::Migrator.proper_table_name(args[0])
-        
+        table_name = proper_table_name(args[0])
+
         # Find models
         (::AlsoMigrate.configuration || []).each do |config|
           next unless config[:source].to_s == table_name
-      
+
           # Don't change ignored columns
           [ config[:ignore] ].flatten.compact.each do |column|
             next if args.include?(column) || args.include?(column.intern)
@@ -50,8 +50,16 @@ module AlsoMigrate
           end
         end
       end
-      
+
       return return_value
+    end
+
+    def proper_table_name(to_table)
+      if ActiveRecord::Migration.instance_methods(false).include? :proper_table_name
+        ActiveRecord::Migration.new.proper_table_name(to_table)
+      else
+        ActiveRecord::Migrator.proper_table_name(to_table)
+      end
     end
 
     def self.included(base)
